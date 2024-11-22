@@ -1,0 +1,39 @@
+@echo off
+REM Archivo centralizado de variables
+
+REM enllaç sync.zip
+set "FILE_ID=1kk1NsHt6c9WsKO9B_brDFmpkZI8o-"
+set "ZIP_LINK=https://drive.google.com/uc?export=download&id=%FILE_ID%"
+set "ZIP_PATH=%USERPROFILE%\Downloads\sync.zip"
+set "EXTRACT_FOLDER=%USERPROFILE%\Downloads\SYNC_TEMP"
+
+REM variables clone
+set "RCLONE_PATH=%USERPROFILE%\AppData\Roaming\rclone"
+
+
+REM remote:digitalegoteque_Gdrive
+set "REMOTE_GD_COMPARTIT=digitalegoteque_Gdrive:- La Violeta - IoT/- COMPARTIT"
+REM remote:rb3sync
+REM revisar REMOTE_RB
+set "REMOTE_RB=rb3sync:/home/admin/Documents/projecte_raspberry/rb_files"
+
+
+REM variables de rutes de local
+set "DESKTOP_PATH=%USERPROFILE%\Desktop"
+
+REM Lógica para COMPARTIT_PATH según el equipo
+if "%COMPUTERNAME%"=="LEGOTEQUE-PC" (
+    set "COMPARTIT_PATH=D:\Oscar\FORMACIO\DIGITAL\DATA SCIENCE with Python\- La Violeta - IoT\- COMPARTIT"
+) else (
+    set "COMPARTIT_PATH=%DESKTOP_PATH%\COMPARTIT"
+)
+
+if "%COMPUTERNAME%"=="LEGOTEQUE-PC" (
+    set "PROJECTE_LOCAL_DIR=D:\Oscar\FORMACIO\DIGITAL\DATA SCIENCE with Python\- La Violeta - IoT"
+) else (
+    set "PROJECTE_LOCAL_DIR=%DESKTOP_PATH%"
+)
+set "PROJECTE_LOCAL_PATH=%PROJECTE_LOCAL_DIR%\projecte_raspberry"
+
+set "RB_LOCAL=%PROJECTE_LOCAL_PATH%\rb_files"
+set "RB_DEL_BACKUP_PATH=%COMPARTIT_PATH%\.backup_eliminats"
