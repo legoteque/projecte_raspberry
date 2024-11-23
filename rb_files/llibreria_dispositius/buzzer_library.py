@@ -1,5 +1,5 @@
 from time import sleep
-from llibreria_dispositius.gpio_manager import get_gpio
+from llibreria_dispositius.gpio_manager import get_gpio as GPIO
 
 #generem les notes establint uns minims i maxims de frecuencia
 def generate_notes_in_freq_range(min_frequency=2100, max_frequency=4800):
@@ -51,7 +51,7 @@ def generate_notes_in_range(note_min, note_max):
 class Buzzer:
     def __init__(self, buzzer_pin):
         self.buzzer_pin = buzzer_pin
-        get_gpio().setup(self.buzzer_pin, get_gpio().OUT)
+        GPIO.setup(self.buzzer_pin, GPIO.OUT)
         self.pwm = None  # PWM se inicializa como None
         self._pwm_active = False
 
@@ -59,7 +59,7 @@ class Buzzer:
     def play_tone(self, frequency, duration):
         """Reproduce un tono específico durante un tiempo."""
         if not self.pwm:  # Inicializa PWM si no está activo
-            self.pwm = get_gpio().PWM(self.buzzer_pin, frequency)
+            self.pwm = GPIO.PWM(self.buzzer_pin, frequency)
             self.pwm.start(50)  # Ciclo de trabajo al 50%
 
         if frequency > 0:
@@ -89,5 +89,4 @@ class Buzzer:
         self.stop_pwm()  # Detiene el PWM si sigue activo
         if self.pwm:
             self.pwm = None
-        get_gpio().cleanup()
 

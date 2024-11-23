@@ -1,4 +1,4 @@
-from llibreria_dispositius.gpio_manager import get_gpio
+from llibreria_dispositius.gpio_manager import get_gpio as GPIO
 from time import sleep
 
 lcd_commands = {
@@ -35,7 +35,7 @@ class LCD:
         self.E = e
         self.DATA_PINS = [d4, d5, d6, d7]
 
-        get_gpio().setup([self.RS, self.E] + self.DATA_PINS, get_gpio().OUT)
+        GPIO.setup([self.RS, self.E] + self.DATA_PINS, GPIO.OUT)
 
         # Inicializar el LCD si se permite
         if auto_init:
@@ -46,17 +46,17 @@ class LCD:
         :param data: Medio byte a enviar (4 bits, entero entre 0 y 15)"""
 
         for i in range(4):  # Solo se usan 4 bits (D4-D7)
-            get_gpio().output(self.DATA_PINS[i], (data >> i) & 0x01)
-        get_gpio().output(self.E, True)  # Pulso en Enable
+            GPIO.output(self.DATA_PINS[i], (data >> i) & 0x01)
+        GPIO.output(self.E, True)  # Pulso en Enable
         sleep(0.001)               # Espera breve
-        get_gpio().output(self.E, False)
+        GPIO.output(self.E, False)
     
     def send_byte(self, data, is_data):
         """Envía un byte completo al LCD (dividido en 2 medios bytes).
         :param data: Byte a enviar (8 bits, entero entre 0 y 255)
         :param is_data: True para enviar datos, False para comandos"""
 
-        get_gpio().output(self.RS, is_data)  # Configurar RS (0 = comando, 1 = datos)
+        GPIO.output(self.RS, is_data)  # Configurar RS (0 = comando, 1 = datos)
         self.send_half_byte(data >> 4)  # Mitad alta (B7-B4)
         self.send_half_byte(data & 0x0F)  # Mitad baja (B3-B0)
         #sleep(0.002)  # Espera para que el LCD procese
@@ -71,7 +71,7 @@ class LCD:
 
     def lcd_init(self):
         """Inicializa el LCD en modo 4 bits."""
-        get_gpio().output(self.RS, False)  # RS a 0 para comandos
+        GPIO.output(self.RS, False)  # RS a 0 para comandos
         for _ in range(3):
             self.send_half_byte(0x03)  # Secuencia de inicialización
             #sleep(0.005)
