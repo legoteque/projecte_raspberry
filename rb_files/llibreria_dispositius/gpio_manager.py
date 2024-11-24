@@ -1,8 +1,9 @@
 import RPi.GPIO as GPIO
 
 def gpio_setmode(mode):
-    if mode == "BCM": GPIO.setmode(GPIO.BCM)
-    if mode == "BOARD": GPIO.setmode(GPIO.BOARD)
+    if mode not in ["BCM", "BOARD"]:
+        raise ValueError("El modo debe ser 'BCM' o 'BOARD'.")
+    GPIO.setmode(GPIO.BCM if mode == "BCM" else GPIO.BOARD)
 
 def gpio_cleanup(pins_l=[]):
     """Limpia la configuración de GPIO. Los pins especificos de pins_l si le pasamos la lista por parametro, todos los pins si no"""

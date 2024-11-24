@@ -1,7 +1,7 @@
 from time import sleep
 from llibreria_dispositius.gpio_manager import get_gpio as GPIO
 
-#generem les notes establint uns minims i maxims de frecuencia
+#generem les notes establint uns minims i maxims de frecuencia utils per al buzzer
 def generate_notes_in_freq_range(min_frequency=2100, max_frequency=4800):
     """
     Genera un conjunto de notas reales con frecuencias entre un rango específico.
@@ -30,53 +30,43 @@ def generate_notes_in_freq_range(min_frequency=2100, max_frequency=4800):
         
         i += 1  # Avanzar al siguiente semitono
 
+    notes["silenci"] = 0  # Agregar "silenci" como frecuencia 0
+
     return notes
 
 NOTES = generate_notes_in_freq_range()
-
-#construiom funcio per extreure les frequencies de les notes que estan en un rang de 2 a 4kz que es on les especificacions del buzzer passiu ens diu que funciona millor
-def generate_notes_in_range(note_min, note_max):
-    freq_min = NOTES[note_min]
-    freq_max = NOTES[note_max]
-
-    # Reintento con manejo explícito del rango de frecuencias
-    filtered_notes = {
-        note: freq for note, freq in NOTES.items()
-        if freq_min <= freq <= freq_max
-    }
-
-    return filtered_notes
 
 
 class Buzzer:
     def __init__(self, buzzer_pin):
         self.buzzer_pin = buzzer_pin
-        GPIO.setup(self.buzzer_pin, GPIO.OUT)
-        self.pwm = None  # PWM se inicializa como None
-        self._pwm_active = False
+        self.pwm = None  # PWM no está inicializado al comienzo
+        self._pwm_active = False  # Indica si PWM está funcionando
 
+        GPIO.setup(self.buzzer_pin, GPIO.OUT)
 
     def play_tone(self, frequency, duration):
         """Reproduce un tono específico durante un tiempo."""
         if not self.pwm:  # Inicializa PWM si no está activo
             self.pwm = GPIO.PWM(self.buzzer_pin, frequency)
             self.pwm.start(50)  # Ciclo de trabajo al 50%
+            self._pwm_active = True
 
-        if frequency > 0:
-            self.pwm.ChangeFrequency(frequency)  # Cambia la frecuencia del tono
-        else:
-            self.pwm.ChangeDutyCycle(0)  # Silencio: cambia el ciclo de trabajo a 0
+        if frequency > 0:  # Tono válido
+            self.pwm.ChangeFrequency(frequency)
+            self.pwm.ChangeDutyCycle(50)  # Activa el buzzer al 50%
+        else:  # Silencio
+            self.pwm.ChangeDutyCycle(0)  # Ciclo de trabajo a 0%
 
-        sleep(duration)  # Espera la duración del tono
-        self.pwm.ChangeDutyCycle(50)  # Vuelve a preparar el PWM para el siguiente tono
-
+        sleep(duration)
 
     def play_melody(self, melody):
         """Reproduce una melodía completa."""
         for note, duration in melody:
-            frequency = NOTES.get(note, 0)
+            frequency = NOTES.get(note, 0)  # Usa 0 si la nota no existe (silencio)
             self.play_tone(frequency, duration)
-        self.stop_pwm()  # Detiene el PWM después de la melodía
+
+        self.stop_pwm()  # Detiene el PWM al final de la melodía
 
     def stop_pwm(self):
         """Detiene el PWM si está activo."""
@@ -85,8 +75,12 @@ class Buzzer:
             self._pwm_active = False
 
     def stop(self):
-        """Limpia la configuración del GPIO."""
-        self.stop_pwm()  # Detiene el PWM si sigue activo
+        """Detiene el PWM y elimina el objeto."""
+        self.stop_pwm()
         if self.pwm:
             self.pwm = None
+
+
+
+
 
