@@ -1,4 +1,4 @@
-from llibreria_dispositius.gpio_manager import get_gpio as GPIO
+from llibreria_dispositius.gpio_manager import GPIO
 from time import sleep
 
 lcd_commands = {

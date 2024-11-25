@@ -11,8 +11,3 @@ def gpio_cleanup(pins_l=[]):
         GPIO.cleanup()
     else: 
         GPIO.cleanup(pins_l)
-    
-
-def get_gpio():
-    """Retorna el módulo GPIO para ser pasado como dependencia."""
-    return GPIO
