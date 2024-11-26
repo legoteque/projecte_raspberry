@@ -3,12 +3,12 @@ import time
 import os
 
 # Configuración del pin del botón
-BUTTON_PIN = 17
+BUTTON_PIN = 3
 PRESS_DURATION = 2  # Duración mínima (en segundos) para ejecutar el apagado
 
 # Configuración del GPIO
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Usamos pull-up interno
+GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Usamos pullº-up interno
 
 def shutdown_system():
     print("Duración suficiente. Apagando el sistema...")
