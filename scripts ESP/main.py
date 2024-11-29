@@ -1,12 +1,20 @@
 import network
 import socket
 import machine
-import time
-import ntptime
+from time import sleep
+from sync_time_lib import sync_time
+
+
+# Variables globales
+wlan = None
+server_socket = None
 
 # Configuración de red
 SSID = "SMART"
 PASSWORD = "12345678"
+# Configuración de red
+SSID = "AULA-I32"
+PASSWORD = "abc1234abc"
 
 # Configuración de pines
 relay_pin = machine.Pin(5, machine.Pin.OUT)  # GPIO5 (D1) para controlar encendido/apagado
@@ -15,77 +23,62 @@ raspberry_status_pin = machine.Pin(4, machine.Pin.IN)  # GPIO4 (D2) para leer es
 
 # Conexión a Wi-Fi
 def connect_wifi():
+    global wlan
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
     wlan.connect(SSID, PASSWORD)
     
-    max_retries = 10
-    retries = 0
-    while not wlan.isconnected() and retries < max_retries:
-        print(f"Intentando conectar a WiFi... ({retries + 1}/{max_retries})")
-        time.sleep(2)
-        retries += 1
+    for retry in range(10):  # Máximo de 10 intentos
+        if wlan.isconnected():
+            print("Conectado a WiFi. Dirección IP:", wlan.ifconfig()[0])
+            return
+        print(f"Intentando conectar a WiFi... ({retry + 1}/10)")
+        sleep(2)
     
-    if wlan.isconnected():
-        print("Conectado a WiFi. Dirección IP:", wlan.ifconfig()[0])
-    else:
-        print("No se pudo conectar a WiFi. Verifica el SSID/contraseña o la configuración de la red.")
-        machine.reset()
+    print("No se pudo conectar a WiFi. Verifica el SSID/contraseña o la configuración de la red.")
+    machine.reset()
 
-# Sincronizar con NTP
-def sync_time():
-    try:
-        print("Sincronizando hora con NTP...")
-        ntptime.settime()  # Sincroniza con el servidor NTP predeterminado (pool.ntp.org)
-        print("Hora sincronizada correctamente.")
-    except Exception as e:
-        print(f"Error al sincronizar la hora: {e}")
-
-# Evaluar el estado real de la Raspberry Pi
+# Evaluar el estado de la Raspberry Pi
 def get_raspberry_state():
-    if raspberry_status_pin.value() == 1:
-        return True  # Encendida
-    else:
-        return False  # Apagada
+    return raspberry_status_pin.value() == 1  # True si encendida, False si apagada
 
-# Función para encender o apagar la Raspberry Pi
+# Control del estado de la Raspberry Pi
 def toggle_raspberry_state(action):
     if action == "encender":
         print("Enviando señal para encender la Raspberry Pi...")
         relay_pin.value(0)  # Pulso LOW
-        time.sleep(0.5)     # Mantener LOW durante 0.5 segundos
+        sleep(0.5)
         relay_pin.value(1)  # Volver a HIGH
         print("Señal de encendido enviada.")
         return "Encendiendo la Raspberry Pi, espere un momento..."
-    
     elif action == "apagar":
         print("Enviando señal para apagar la Raspberry Pi...")
         relay_pin.value(0)  # Pulso LOW
-        time.sleep(2.5)     # Mantener LOW durante 2.5 segundos
+        sleep(2.5)
         relay_pin.value(1)  # Volver a HIGH
         print("Señal de apagado enviada.")
         return "Apagando la Raspberry Pi, espere un momento..."
-    
     else:
         return "Acción no reconocida."
 
 # Servidor HTTP
 def start_server():
+    global server_socket
     addr = socket.getaddrinfo("0.0.0.0", 80)[0][-1]
-    s = socket.socket()
-    s.bind(addr)
-    s.listen(1)
+    server_socket = socket.socket()
+    server_socket.bind(addr)
+    server_socket.listen(1)
     print("Servidor en ejecución, esperando conexiones...")
-
+    
     while True:
-        cl, addr = s.accept()
+        cl, addr = server_socket.accept()
         print("Conexión desde", addr)
         request = cl.recv(1024).decode("utf-8")
         print("Solicitud recibida:", request)
 
         # Hora actual para mostrar en la web
-        current_time = time.localtime()
-        formatted_time = f"{current_time[3]:02}:{current_time[4]:02}:{current_time[5]:02}"
+        
+        formatted_time = sync_time()
 
         # Verificar la página principal
         if "GET / " in request or "GET / HTTP/1.1" in request:
@@ -194,7 +187,26 @@ def start_server():
         cl.send("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n" + response)
         cl.close()
 
-# Ejecutar
-connect_wifi()
-sync_time()
-start_server()
+
+# Limpieza y cierre
+def cleanup():
+    print("Cerrando servidor y desconectando Wi-Fi...")
+    if server_socket:
+        server_socket.close()
+    if wlan and wlan.isconnected():
+        wlan.disconnect()
+        wlan.active(False)
+    print("Reiniciando dispositivo...")
+    #machine.reset()
+
+# Main
+try:
+    connect_wifi()
+    sync_time(print_time=True)
+    start_server()
+except KeyboardInterrupt:
+    print("Ejecución interrumpida por el usuario.")
+    cleanup()
+except Exception as e:
+    print(f"Ha ocurrido un error inesperado: {e}")
+    cleanup()
