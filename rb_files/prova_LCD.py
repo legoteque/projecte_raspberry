@@ -10,14 +10,10 @@ pins = {"rs":23, "e":24, "d4":26, "d5":19, "d6":13, "d7":6}
 lcd = LCD(rs=pins["rs"], e=pins["e"], d4=pins["d4"], d5=pins["d5"], d6=pins["d6"], d7=pins["d7"])
 
 # Escribir en el LCD
-FRASE = ("TENGO UN DEFECTO EN LA NARIZ QUE ES MUY MOLESTO QUE ME SUCEDE IGUAL EN VIGO "
-"QUE EN MADRID NO SE POR QUE CUANDO ME PONGO MUY NERVIOSO ME DA UN PICOR IRRESISTIBLE "
-"EN LA NARIZ. SI EN EL COLEGIO HAY UN EXAMEN IMPORTANTE O POR LAS NOTAS ME REGANA MI PAPA "
-"ME DA ENSEGUIDA ESE PICOR TAN EXCITANTE QUE POR DESGRACIA SIEMPRE ME HACE ESTORNUDAR AH  "
-"AH ACHIS COMO ME PICA LA NARIZ COMO ME PICA LA NARIZ YA NO LO PUEDO RESISTIR COMO ME PICA LA NARIZ")
+FRASE = ("TENGO un slfdjgnsldkgslkg sdlgkws lkgds lkedsnlgks nlskd nldskn glkdsg ")
 
 try:
-    lcd.lcd_write(FRASE, scroll=True)
+    lcd.display(content=FRASE, title="el títol")
     # Pausa para visualizar el mensaje
     sleep(5)
 
@@ -27,5 +23,6 @@ try:
 except KeyboardInterrupt:
     print("\nInterrumpido por el usuario.")
 finally:
+    print("limpiando")
     lcd.lcd_clear()
     gpio_cleanup(list(pins.values()))

@@ -1,5 +1,7 @@
 from llibreria_dispositius.gpio_manager import GPIO
 from time import sleep
+import threading
+import time
 
 lcd_commands = {
     "Clear Display": 0x01,  # Borra la pantalla y mueve el cursor a la posición inicial
@@ -81,59 +83,59 @@ class LCD:
         self.send_command("Entry Mode Set (Increment, No Shift)")
         self.send_command("Clear Display")
 
-    def lcd_write(self, message, scroll=True, delay=0.2, title="Mensaje:"):
-        """Escribe un mensaje en el LCD con diferentes comportamientos según el valor de scroll.
-        :param message: Mensaje a escribir (cadena de texto).
-        :param scroll: True para habilitar desplazamiento en mensajes largos (por defecto True).
-        :param delay: Tiempo en segundos entre cada desplazamiento (por defecto 0.2s).
-        :param title: Texto fijo en la línea 1 cuando scroll=True (por defecto "Mensaje:")."""
-        visible_chars = 16  # Capacidad de una línea
-        message = message.strip()  # Limpiar espacios innecesarios del mensaje
+    def display(self, title="", content="", delay=0.2):
+        """
+        Escribe contenido en el LCD en una o dos líneas.
+        :param title: Contenido para la primera línea (recortado a 16 caracteres si es necesario).
+        :param content: Contenido para la segunda línea (recortado a 16 caracteres si es necesario).
+        :param delay: Tiempo entre cada desplazamiento en segundos.
+        """
+        visible_chars = 16  # Máximo número de caracteres visibles en cada línea
 
-        if not scroll:
-            # Caso scroll=False: Escribir el mensaje en dos líneas instantáneamente
-            line1 = message[:visible_chars]  # Primera línea: hasta 16 caracteres
-            line2 = message[visible_chars:2 * visible_chars]  # Segunda línea: los siguientes 16 caracteres
+        # Limpieza y recorte de las líneas
+        title = title.strip()[:visible_chars]
+        content = content.strip()
 
-            # Escribir en la línea 1
-            self.send_command("Set DDRAM Address Line 1")
-            for char in line1.ljust(visible_chars):  # Rellenar con espacios si es más corto
-                self.envia_caracter(char)
+        # Línea 1: Escribir el título
+        self.send_command("Set DDRAM Address Line 1")
+        for char in title.ljust(visible_chars):  # Rellenar con espacios si es más corto
+            self.envia_caracter(char)
 
-            # Escribir en la línea 2
+        # Línea 2: Manejar contenido
+        if len(content) <= visible_chars:
+            # Contenido corto: Mostrar directamente sin animar
             self.send_command("Set DDRAM Address Line 2")
-            for char in line2.ljust(visible_chars):  # Rellenar con espacios si es más corto
+            for char in content.ljust(visible_chars):  # Rellenar con espacios si es más corto
                 self.envia_caracter(char)
         else:
-            # Caso scroll=True:
-            # Línea 1: Escribir el título solo una vez
-            self.send_command("Set DDRAM Address Line 1")
-            for char in title.ljust(visible_chars):  # Escribir el título y rellenar con espacios
-                self.envia_caracter(char)
+            # Contenido largo: Animar con desplazamiento gradual
+            self._animate_gradually(content, delay)
 
-            # Animación inicial en la línea 2
+    def _animate_gradually(self, content, delay):
+        """Animación inicial + desplazamiento continuo en un bucle infinito."""
+        visible_chars = 16
+        # Animación inicial
+        self.send_command("Set DDRAM Address Line 2")
+        for i in range(min(len(content), visible_chars)):
+            line2 = content[:i + 1].rjust(visible_chars)  # Construir línea con espacios a la izquierda
             self.send_command("Set DDRAM Address Line 2")
-            for i in range(min(len(message), visible_chars)):
-                line2 = message[:i + 1].rjust(visible_chars)  # Construir línea con espacios a la izquierda
-                self.send_command("Set DDRAM Address Line 2")
-                for char in line2:
-                    self.envia_caracter(char)
-                sleep(delay)
+            for char in line2:
+                self.envia_caracter(char)
+            sleep(delay)
 
-            # Desplazamiento del mensaje en la línea 2 si es más largo que 16 caracteres
-            if len(message) > visible_chars:
-                extended_message = message.ljust(len(message) + visible_chars)  # Espacios para desplazamiento
-                for i in range(len(extended_message) - visible_chars + 1):
-                    # Línea 2: Actualizar el mensaje desplazado
-                    window = extended_message[i:i + visible_chars]  # Ventana de desplazamiento
-                    self.send_command("Set DDRAM Address Line 2")
-                    for char in window:
-                        self.envia_caracter(char)
-
-                    # Retardo entre desplazamientos
-                    sleep(delay)
+        # Desplazamiento continuo
+        extended_content = content.ljust(len(content) + visible_chars)  # Espacios para desplazamiento
+        for i in range(len(extended_content) - visible_chars + 1):
+            window = extended_content[i:i + visible_chars]  # Ventana de desplazamiento
+            self.send_command("Set DDRAM Address Line 2")
+            for char in window:
+                self.envia_caracter(char)
+            sleep(delay)
 
     def lcd_clear(self):
         """Limpia el contenido del LCD."""
         self.send_command("Clear Display")
         sleep(0.002)
+    
+    def clean_pins(self):
+        GPIO.cleanup([self.RS, self.E] + self.DATA_PINS)
