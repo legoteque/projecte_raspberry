@@ -1,4 +1,3 @@
-import network
 import socket
 import machine
 from time import sleep
@@ -25,35 +24,6 @@ NETWORKS = [
     {"SSID": "SMART", "PASSWORD": "12345678"},
     {"SSID": "AULA-I32", "PASSWORD": "abc1234abc"},
 ]
-
-# Conexión a Wi-Fi
-def connect_to_network(ssid, password):
-    global wlan
-    if wlan is None:
-        wlan = network.WLAN(network.STA_IF)
-        wlan.active(True)
-    
-    print(f"Intentando conectar a {ssid}...")
-    wlan.disconnect()  # Asegúrate de desconectar cualquier conexión previa
-    wlan.connect(ssid, password)
-    
-    for retry in range(10):  # Máximo de 10 intentos
-        if wlan.isconnected():
-            print(f"Conectado a {ssid}. Dirección IP:", wlan.ifconfig()[0])
-            return True
-        print(f"Intento {retry + 1}/10 fallido para {ssid}.")
-        sleep(2)
-    
-    print(f"No se pudo conectar a {ssid}.")
-    return False
-
-def connect_wifi(networks_dic):
-    for network in networks_dic:
-        if connect_to_network(network["SSID"], network["PASSWORD"]):
-            print(f"Conexión exitosa a la red {network['SSID']}.")
-            return  # Sal del bucle una vez conectado
-    print("No se pudo conectar a ninguna red. Verifica la configuración.")
-    #machine.reset()
 
 # Evaluar el estado de la Raspberry Pi
 def get_raspberry_state():
