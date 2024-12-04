@@ -3,6 +3,7 @@ import socket
 import machine
 from time import sleep
 from sync_time_lib import sync_time
+from wifi import WifiConnection
 
 # Variables globales
 wlan = None
@@ -197,9 +198,11 @@ def cleanup():
     #machine.reset()
 
 # Main
+
+wifi = WifiConnection(NETWORKS)
+sync_time(print_time=True)
+
 try:
-    connect_wifi(NETWORKS)
-    sync_time(print_time=True)
     start_server()
 except KeyboardInterrupt:
     print("Ejecución interrumpida por el usuario.")
