@@ -72,6 +72,14 @@ class RotaryEncoder:
         Retorna el valor actual del encoder.
         """
         return self.value
+    
+    def disable_callbacks(self):
+        """
+        Desactiva las interrupciones del encoder, eliminando los callbacks asociados.
+        """
+        self.pi.callback(self.gpio_clk).cancel()
+        self.pi.callback(self.gpio_sw).cancel()
+        print("Interrupciones desactivadas para el encoder.")
 
     def stop(self):
         """
