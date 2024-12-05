@@ -1,7 +1,5 @@
 from llibreria_dispositius.gpio_manager import GPIO
 from time import sleep
-import threading
-import time
 
 lcd_commands = {
     "Clear Display": 0x01,  # Borra la pantalla y mueve el cursor a la posición inicial

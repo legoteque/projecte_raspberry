@@ -1,6 +1,5 @@
 import RPi.GPIO as GPIO
-import os, sys, time, subprocess
-from pigpio import FALLING_EDGE, RISING_EDGE, EITHER_EDGE
+import os, time, subprocess, threading
 from llibreria_dispositius.gpio_manager import gpio_setmode, gpio_cleanup
 from llibreria_dispositius.buzzer_library import Buzzer
 from llibreria_dispositius.rotary_encoder_library import RotaryEncoder
@@ -104,7 +103,6 @@ def shutdown_system():
     lcd.display(content="", title="Apagada")
 
     gpio_cleanup()
-    #sys.exit()
     os.system("sudo shutdown -h now")
 
     
@@ -128,8 +126,9 @@ pins = {"rs":23, "e":24, "d4":26, "d5":19, "d6":13, "d7":6}
 # Crear un objeto LCD con los pines GPIO de la Raspberry Pi
 lcd = LCD(rs=pins["rs"], e=pins["e"], d4=pins["d4"], d5=pins["d5"], d6=pins["d6"], d7=pins["d7"])
 
-#Mensaje de bienvenida
-start_lcd_menu()
+#Mensaje de bienvenida en un hilo secundario
+welcome_thread = threading.Thread(target=start_lcd_menu)
+welcome_thread.start()
 
 # Configuración del pin del encendido/apagado (BUTTON)
 BUTTON_PIN = 3
@@ -149,6 +148,9 @@ play_welcome_melody()
 
 # Inicialización del encoder
 encoder = RotaryEncoder(gpio_clk=5, gpio_dt=16, gpio_sw=20, rotation_callback=rotation_callback, button_callback=button_callback)
+
+# Sincronización con el hilo del mensaje de bienvenida
+welcome_thread.join()  # Esperar a que el hilo termine si aún no lo ha hecho
 
 # Mostrar el menú inicial
 lcd.display(content=menu_options[current_option], title=menu_stack[-1])
